@@ -1,7 +1,6 @@
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
-import streamlit_authenticator as stauth
 
 # Memuat variabel lingkungan dari file .env
 load_dotenv()
@@ -21,8 +20,7 @@ pw_hashing_key = os.getenv("PASSWORD_HASH_KEY")
 def get_user(username, password):
     """Retrieve a user from the database by username and password."""
     user = users_collection.find_one({"username": username})
-    hashed_password = stauth.Hasher(password).generate()
-    if user and hashed_password:
+    if user and password:
         return user
     return None
 
@@ -30,8 +28,7 @@ def add_user(username, password):
     """Add a new user to the database. Return True if successful, else False."""
     if users_collection.find_one({"username": username}):
         return False
-    hashed_password = stauth.Hasher(password).generate()
-    users_collection.insert_one({"username": username, "password": hashed_password})
+    users_collection.insert_one({"username": username, "password": password})
     return True
 
 def fetch_users():
