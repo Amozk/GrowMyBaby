@@ -2,6 +2,9 @@
 .env
 env/
 
+# Secrets.toml
+secrets.toml
+
 # vercel.json
 vercel.json
 
