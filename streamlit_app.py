@@ -5,15 +5,15 @@ import requests
 import streamlit_authenticator as stauth
 import joblib
 from pymongo import MongoClient
+from dotenv import load_dotenv
 from typing import Generator
 from PIL import Image
-from utils.db import add_anak, cek_anak, delete_anak, add_user, fetch_users, get_session_ids_for_user, save_session_to_db, load_session_from_db, get_session_name, delete_session_from_db, update_anak
+from utils.db import add_anak, cek_anak, delete_anak, add_user, get_user, fetch_users, get_session_ids_for_user, save_session_to_db, load_session_from_db, get_session_name, delete_session_from_db, update_anak
 from models.test_models.test_stunting_classifier import stunting_classifier
 import datetime
 
 
 # Load Environment Variables------------------------------------------------------------------------
-
 
 
 
@@ -29,15 +29,6 @@ db = client["sic5_belajar"]
 
 
 # Authentication-----------------------------------------------------------------------------------
-
-cookie_hash_key = st.secrets["COOKIE_HASH_KEY"]
-credentials = fetch_users()
-authenticator = stauth.Authenticate(
-    credentials=credentials,
-    cookie_name="GrowMyBaby_Cookie",
-    cookie_key=cookie_hash_key,
-    cookie_expiry_days=1,
-)
 
 def is_logged_in():
     return st.session_state.get('logged_in', False)
@@ -63,29 +54,18 @@ def login_page():
                 st.error("Username already exists. Please choose a different username.")
             
     else:
-        fields = {
-        'Form name': 'Sign In',
-        'Username': 'Username',
-        'Password': 'Password',
-        'Login': 'sign in'
-        }
-
-        name, authentication_status, username = authenticator.login(
-            location='main',
-            max_concurrent_users=None,
-            max_login_attempts=None,
-            fields=fields,
-            clear_on_submit=False
-        )
-
-        if authentication_status:
-            st.session_state.logged_in = True
-            st.session_state.username = username
-            st.experimental_rerun()
-        elif authentication_status is False:
-            st.error('Username/password is incorrect')
-        elif authentication_status is None:
-            st.warning('Please enter your username and password')
+        st.title("Login Page")
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        if st.button("Login"):
+            user = get_user(username, password)
+            if user:
+                st.session_state['logged_in'] = True
+                st.session_state['username'] = username
+                st.success("Logged in successfully!")
+                st.experimental_rerun()
+            else:
+                st.error("Invalid username or password. Please try again.")
 
 def generate_chat_responses(chat_completion) -> Generator[str, None, None]:
     """Yield chat response content from the Groq API response."""
@@ -373,7 +353,10 @@ def dashboard_page():
                 st.header(f":blue[{st.session_state.session_name}]")
                 if st.button("Delete Session", key="delete_session_button"):
                     delete_session_from_db(st.session_state.session_id)
-                    st.session_state.clear()
+                    st.session_state.session_id = str(uuid.uuid4())
+                    st.session_state.has_session_name = False
+                    st.session_state.messages = []
+                    st.session_state.session_name = ''
                     selected_page = "ChatBot"
                     st.session_state.refresh = True
 
@@ -478,8 +461,6 @@ def dashboard_page():
             st.session_state.refresh = False
             st.experimental_rerun()
     elif selected_page == "Logout":
-        authenticator.logout("Logout", "unrendered")
-        st.session_state.logged_in = False
         st.session_state.username = ''
         st.session_state.refresh = False
         st.session_state.has_session_name = False
@@ -492,6 +473,7 @@ def dashboard_page():
 def main():
     if 'logged_in' not in st.session_state:
         st.session_state['logged_in'] = False
+        st.experimental_rerun()
 
     if is_logged_in():
         dashboard_page()

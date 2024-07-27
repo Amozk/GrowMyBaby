@@ -19,8 +19,8 @@ chat_collection = db["chat_history"] # Collection to store chat history
 pw_hashing_key = os.getenv("PASSWORD_HASH_KEY")
 def get_user(username, password):
     """Retrieve a user from the database by username and password."""
-    user = users_collection.find_one({"username": username})
-    if user and password:
+    user = users_collection.find_one({"username": username, "password": password})
+    if user:
         return user
     return None
 
