@@ -3,6 +3,7 @@
 env/
 
 # Secrets.toml
+.streamlit
 secrets.toml
 
 # vercel.json
