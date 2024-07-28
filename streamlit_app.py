@@ -1,14 +1,11 @@
 import streamlit as st
-import os
 import pandas as pd
 import requests
-import streamlit_authenticator as stauth
 import joblib
 from pymongo import MongoClient
-from dotenv import load_dotenv
 from typing import Generator
 from PIL import Image
-from utils.db import add_anak, cek_anak, delete_anak, add_user, get_user, fetch_users, get_session_ids_for_user, save_session_to_db, load_session_from_db, get_session_name, delete_session_from_db, update_anak
+from utils.db import add_anak, cek_anak, delete_anak, add_user, get_user, get_session_ids_for_user, save_session_to_db, load_session_from_db, get_session_name, delete_session_from_db, update_anak
 from models.test_models.test_stunting_classifier import stunting_classifier
 import datetime
 
@@ -292,22 +289,11 @@ def dashboard_page():
 
         # LLM Client setup--------------------------------------------------------------------------
 
-        # Load the model from the Hugging Face Hub
-        repo_id = "meta-llama/Meta-Llama-3-8B"
-        hf_client = InferenceClient(repo_id) 
-
         # Load the Groq API key from the Streamlit secrets
         groq_client = Groq(
             api_key = st.secrets["GROQ_API_KEY"],
         )
         model_from_groq = "llama-3.1-8b-instant"
-
-        # Load the NVIDIA API key from the Streamlit secrets
-        nvidia_client = OpenAI(
-        base_url = "https://integrate.api.nvidia.com/v1", 
-        api_key = st.secrets["OPENAI_API_KEY"]
-        )
-        model_from_nvidia = "meta/llama-3.1-70b-instruct"
 
         # Initialize session state variables if they don't exist
         if 'session_id' not in st.session_state:
